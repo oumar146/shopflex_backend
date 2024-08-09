@@ -1,6 +1,5 @@
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
 
 exports.signup = async (req, res, client) => {
   try {
@@ -38,7 +37,7 @@ exports.login = async (req, res, client) => {
 
     // Rechercher l'utilisateur par nom d'utilisateur
     const query = {
-      text: "SELECT * FROM users WHERE email = $1",
+      text: "SELECT * FROM users u JOIN roles r ON u.role_fk = r.id WHERE email = $1 AND r.name = 'admin'",
       values: [email],
     };
 
@@ -62,7 +61,7 @@ exports.login = async (req, res, client) => {
       token: jwt.sign(
         { userId: user.id },
         process.env.TOKEN_KEY,
-        { expiresIn: '1m' }
+        { expiresIn: '1h' }
     )
     })
     } catch (error) {
@@ -71,6 +70,38 @@ exports.login = async (req, res, client) => {
   }
 };
 
-exports.test = (req, res, client) => {
-  res.status(200).json({ message: "Requete authentifié",id : req.token });
+exports.tokenCheck = async (req, res, client) => {
+  try {
+
+    // Rechercher l'utilisateur par nom d'utilisateur
+    const query = {
+      text: "SELECT u.first_name, u.last_name, u.sexe, u.email, u.phone, r.name FROM users u JOIN roles r ON u.role_fk = r.id WHERE u.id = $1 AND r.name = 'admin'",
+      values: [req.auth.userId],
+    };
+
+    const result = await client.query(query);
+    const user = result.rows
+    
+    if (user.length === 0) {
+      // Si l'utilisateur n'est pas trouvé
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.status(200).json({user });
+    } catch (error) {
+    console.error("Login Error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getAllUsers = async (req, res, client) => {
+  try {
+    // Récupérer ls informations sur tous les utilisateurs
+    const query = { text: "SELECT u.id, u.first_name, u.last_name, u.sexe, u.location, u.birthdate, u.email, u.phone, r.name AS role_name FROM users u JOIN roles r ON u.role_fk = r.id;" };
+    const response = await client.query(query);
+    const users = response.rows
+    res.status(200).json({users });
+  } catch (error) {
+    console.error("Error get all users :", error);
+    res.status(500).json({ error: "Error get all users" });
+  }
 };

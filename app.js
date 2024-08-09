@@ -1,8 +1,10 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const usersRoutes = require('./router/userRoutes');
-const auth = require('./middleware/auth');
+const userRoutes = require('./router/userRoutes');
+const colorRoutes = require('./router/colorRoutes');
+const subcategoryRoutes = require('./router/subcategoryRoutes');
+
 
 //Autoriser la lecture des objets au format JSON
 app.use(bodyParser.json());
@@ -22,7 +24,8 @@ app.use((req, res, next) => {
 });
 
 //Association d'URL avec des routes 
-app.use('/user', usersRoutes);
-
+app.use('/user', userRoutes);
+app.use('/color', colorRoutes);
+app.use('/sub-category', subcategoryRoutes);
 
 module.exports = app;
